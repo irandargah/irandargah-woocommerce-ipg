@@ -491,18 +491,17 @@ class WC_Gateway_IranDargah extends WC_Payment_Gateway
      */
     private function send_curl_request($url, $data)
     {
-        try {
-            $response = null;
-            $iteration = 0;
+        for ($i = 0; $i < 10; $i ++) {
+            sleep(2);
+            try {
             
-            $args = [
-                'body' => json_encode($data),
-                'timeout' => '15',
-                'sslverify' => false,
-                'headers' => ['Content-Type' => 'application/json'],
-            ];
+                $args = [
+                    'body' => json_encode($data),
+                    'timeout' => '20',
+                    'sslverify' => false,
+                    'headers' => ['Content-Type' => 'application/json'],
+                ];
 
-            do {
 				$response = wp_remote_post($url, $args);
 				if (is_wp_error($response) || !isset($response['body'])) {
                     $this->log('Error in sending request');
@@ -510,17 +509,17 @@ class WC_Gateway_IranDargah extends WC_Payment_Gateway
 				} else {
                     $body = wp_remote_retrieve_body($response);
                     $response = json_decode($body);
-					break;
+                    if ($response) {
+                        break;
+                    }
 				}
-                $iteration++;
-			} while (is_null($response) && $iteration < 3);
 
-            return $response;
-
-		} catch (Exception $ex) {
-            $this->log($ex);
-			return false;
-		}
+            } catch (Exception $ex) {
+                $this->log($ex);
+                return false;
+            }
+        }
+        return $response;
     }
 
     /**
