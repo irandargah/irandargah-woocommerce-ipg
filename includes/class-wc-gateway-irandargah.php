@@ -502,17 +502,17 @@ class WC_Gateway_IranDargah extends WC_Payment_Gateway
                     'headers' => ['Content-Type' => 'application/json'],
                 ];
 
-				$response = wp_remote_post($url, $args);
-				if (is_wp_error($response) || !isset($response['body'])) {
+                $response = wp_remote_post($url, $args);
+                if (is_wp_error($response) || !isset($response['body'])) {
                     $this->log('Error in sending request');
                     continue;
-				} else {
+                } else {
                     $body = wp_remote_retrieve_body($response);
                     $response = json_decode($body);
                     if ($response) {
                         break;
                     }
-				}
+                }
 
             } catch (Exception $ex) {
                 $this->log($ex);
@@ -533,19 +533,18 @@ class WC_Gateway_IranDargah extends WC_Payment_Gateway
     {
         $client = new SoapClient($this->wsdl_url, ['cache_wsdl' => WSDL_CACHE_NONE]);
 
-        $response = null;
-        $iteration = 0;
-
-        do {
+        for ($i = 0; $i < 10; $i ++) {
+            sleep(2);
             try {
                 $response = $client->__soapCall($method, [$data]);
+                if ($response) {
+                    break;
+                }
             } catch (\SoapFault $fault) {
                 $this->log($fault->getMessage());
+                continue;
             }
-
-            $iteration++;
-
-        } while (is_null($response) && $iteration < 3);
+        }
 
         return $response;
     }
